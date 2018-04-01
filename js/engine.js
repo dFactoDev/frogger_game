@@ -66,6 +66,7 @@ var Engine = (function(global) {
         reset();
         lastTime = Date.now();
         main();
+        console.log('running');
     }
 
     /* This function is called by main (our game loop) and itself calls all
@@ -93,7 +94,7 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
-        player.update();
+        player.update(); 
     }
 
     /* This function initially draws the "game level", it will then call

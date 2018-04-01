@@ -7,9 +7,10 @@ var ENEM_ROW1 = 60,
         ENEM_ROW3 = 230;
 
 //  Speed of enemy X movement
-var MAX_SPEED = 500, MIN_SPEED = 200;
+var MAX_SPEED = 500, MIN_SPEED = 250;
 
-
+//  Player movement step size
+var STEP_SIZE = 50;
 
 var Enemy = function() {
     // Variables applied to each of our instances go here,
@@ -47,6 +48,52 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
+
+var Player = function () {
+  this.sprite = 'images/char-boy.png';
+  this.x = 200; // TODO: relative pos;
+  this.y = 400; // TODO: relative pos;
+};
+
+Player.prototype.update = function() {
+  switch(true) {
+     case (this.x < 0): // player is off left edge
+       this.x = 0;
+       break;
+     case (this.x > (ctx.canvas.width - 100)): // player is off right edge
+       this.x = ctx.canvas.width - 100;
+       break;
+     case (this.y < 0): // player is off top edge
+       this.y = -10;
+       break;
+     case (this.y > (ctx.canvas.height -200)): // player is off bottom edge
+       this.y = ctx.canvas.height - 200;
+       break;
+  }
+};
+
+Player.prototype.render = function() {
+  ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
+Player.prototype.handleInput = function(direction) {
+  switch(direction) {
+    // TODO: proper values
+    case 'left': 
+      this.x -= STEP_SIZE;
+      break;
+    case 'right':
+      this.x += STEP_SIZE;
+      break;
+    case 'down':
+      this.y += STEP_SIZE;
+      break;
+    case 'up':
+      this.y -= STEP_SIZE;
+      break;
+  }
+};
+
 // Now write your own player class
 // This class requires an update(), render() and
 // a handleInput() method.
@@ -80,4 +127,6 @@ enemy2.x = 0, enemy2.y = ENEM_ROW2;
 enemy3.x = 0, enemy3.y = ENEM_ROW3;
 
 var allEnemies = [enemy1,enemy2, enemy3];
+
+var player = new Player();
 
