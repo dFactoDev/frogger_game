@@ -1,16 +1,23 @@
 // Enemies our player must avoid
 
 // CONSTANTS
+//  Column and Row sizes
+var ROW_H = 83, COL_W = 101;
 //  Rows for each enemy lane
-var ENEM_ROW1 = 60, 
-        ENEM_ROW2 = 144,
-        ENEM_ROW3 = 230;
+var ENEM_ROW1 = 1 * ROW_H - 20, 
+        ENEM_ROW2 = 2 * ROW_H - 20,
+        ENEM_ROW3 = 3 * ROW_H - 20;
+//  Player boundaries
+var BOUNDARY_TOP = -10, BOUNDARY_BTM = 405,
+        BOUNDARY_L = 0, BOUNDARY_R = 404;
+// Paving boundaries. Steps in this space count points.
+var PAVING_TOP = 73, PAVING_BTM = 239;
 
 //  Speed of enemy X movement
-var MAX_SPEED = 500, MIN_SPEED = 250;
+var MAX_SPEED = 450, MIN_SPEED = 150;
 
-//  Player movement step size
-var STEP_SIZE = 50;
+// Player avatar size
+var PLAYER_W = 100, PLAYER_H = 170;
 
 var Enemy = function() {
     // Variables applied to each of our instances go here,
@@ -30,7 +37,7 @@ Enemy.prototype.update = function(dt) {
     // all computers.
     
  
-    if (this.x < ctx.canvas.width) { //if enemy not off canvas
+    if (this.x < (COL_W * 5)) { //if enemy not off canvas
       this.x += this.speed * dt;
     } else { // if off canvas
       // reset speed to new random
@@ -51,23 +58,23 @@ Enemy.prototype.render = function() {
 
 var Player = function () {
   this.sprite = 'images/char-boy.png';
-  this.x = 200; // TODO: relative pos;
-  this.y = 400; // TODO: relative pos;
+  this.x = COL_W * 2; // TODO: relative pos;
+  this.y = BOUNDARY_BTM; // TODO: relative pos;
 };
 
 Player.prototype.update = function() {
   switch(true) {
-     case (this.x < 0): // player is off left edge
-       this.x = 0;
+     case (this.x < BOUNDARY_L): // player is off left edge
+       this.x = BOUNDARY_L;
        break;
-     case (this.x > (ctx.canvas.width - 100)): // player is off right edge
-       this.x = ctx.canvas.width - 100;
+     case (this.x > BOUNDARY_R): // player is off right edge
+       this.x = BOUNDARY_R;
        break;
-     case (this.y < 0): // player is off top edge
-       this.y = -10;
+     case (this.y < BOUNDARY_TOP): // player is off top edge
+       this.y = BOUNDARY_TOP;
        break;
-     case (this.y > (ctx.canvas.height -200)): // player is off bottom edge
-       this.y = ctx.canvas.height - 200;
+     case (this.y > BOUNDARY_BTM): // player is off bottom edge
+       this.y = BOUNDARY_BTM;
        break;
   }
 };
@@ -80,16 +87,16 @@ Player.prototype.handleInput = function(direction) {
   switch(direction) {
     // TODO: proper values
     case 'left': 
-      this.x -= STEP_SIZE;
+      this.x -= COL_W;
       break;
     case 'right':
-      this.x += STEP_SIZE;
+      this.x += COL_W;
       break;
     case 'down':
-      this.y += STEP_SIZE;
+      this.y += ROW_H;
       break;
     case 'up':
-      this.y -= STEP_SIZE;
+      this.y -= ROW_H;
       break;
   }
 };
@@ -119,14 +126,17 @@ document.addEventListener('keyup', function(e) {
 });
 
 var enemy1 = new Enemy(),
-        enemy2 = new Enemy();
-        enemy3 = new Enemy();
+        enemy2 = new Enemy(),
+        enemy3 = new Enemy(),
+        enemy4 = new Enemy();
 
 enemy1.x = 0, enemy1.y = ENEM_ROW1; 
-enemy2.x = 0, enemy2.y = ENEM_ROW2;
-enemy3.x = 0, enemy3.y = ENEM_ROW3;
+enemy2.x = 0, enemy2.y = ENEM_ROW1;
+enemy3.x = 0, enemy3.y = ENEM_ROW2;
+enemy4.x = 0, enemy4.y = ENEM_ROW3; 
 
-var allEnemies = [enemy1,enemy2, enemy3];
+
+var allEnemies = [enemy1,enemy2, enemy3, enemy4];
 
 var player = new Player();
 
