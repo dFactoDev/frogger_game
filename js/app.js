@@ -1,5 +1,3 @@
-// Enemies our player must avoid
-
 // CONSTANTS
 //  Column and Row sizes
 var ROW_H = 83, COL_W = 101;
@@ -13,11 +11,15 @@ var BOUNDARY_TOP = -10, BOUNDARY_BTM = 405,
 // Paving boundaries. Steps in this space count points.
 var PAVING_TOP = 73, PAVING_BTM = 239;
 
-//  Speed of enemy X movement
-var MAX_SPEED = 450, MIN_SPEED = 150;
-
 // Player avatar size
 var PLAYER_W = 100, PLAYER_H = 170;
+// Points scored for each step
+var POINTS_STEP = 50;
+
+var score = 0;
+var player_last_y = 0, player_last_x = 0; //player position before last update
+
+
 
 var Enemy = function() {
     // Variables applied to each of our instances go here,
@@ -26,7 +28,9 @@ var Enemy = function() {
     // The image/sprite for our enemies, this uses
     // a helper we've provided to easily load images
     this.sprite = 'images/enemy-bug.png';
-    this.speed = Math.random() * (MAX_SPEED - MIN_SPEED) + MIN_SPEED;
+    
+    this.min_speed = 50;
+    this.max_speed = 250;
 };
 
 // Update the enemy's position, required method for game
@@ -38,15 +42,13 @@ Enemy.prototype.update = function(dt) {
     
  
     if (this.x < (COL_W * 5)) { //if enemy not off canvas
-      this.x += this.speed * dt;
+      this.x += this.speed * dt; // move character further
     } else { // if off canvas
       // reset speed to new random
-      this.speed = Math.random() * (MAX_SPEED - MIN_SPEED) + MIN_SPEED;
+      this.speed = Math.random() * (this.max_speed - this.min_speed) + this.min_speed;
       // reset X pos to start from left again
-      this.x = -100;
+      this.x = -100; //start off-screen for smoother visual
     }
-
-    this.y;
     
 };
 
@@ -77,6 +79,23 @@ Player.prototype.update = function() {
        this.y = BOUNDARY_BTM;
        break;
   }
+  
+  // if player has movedm
+  if(player_last_y !== this.y || player_last_x !== this.x) {
+    // then if player position is within paved area 
+    if(this.y <= PAVING_BTM && this.y >= PAVING_TOP) {
+       score += POINTS_STEP;
+       console.log(score);
+    } 
+    // if below paving and points already scored
+    else if (this.y > PAVING_BTM && score > 0) { 
+      score -= POINTS_STEP;
+      console.log(score);
+    }
+  }
+  
+  player_last_y = this.y, player_last_x = this.x;
+  
 };
 
 Player.prototype.render = function() {
@@ -128,15 +147,22 @@ document.addEventListener('keyup', function(e) {
 var enemy1 = new Enemy(),
         enemy2 = new Enemy(),
         enemy3 = new Enemy(),
-        enemy4 = new Enemy();
+        enemy4 = new Enemy(),
+        enemy5 = new Enemy(),
+        enemy6 = new Enemy();
 
 enemy1.x = 0, enemy1.y = ENEM_ROW1; 
-enemy2.x = 0, enemy2.y = ENEM_ROW1;
+enemy2.x = 0, enemy2.y = ENEM_ROW1, 
+        enemy2.min_speed = 250, enemy2.max_speed = 400;
 enemy3.x = 0, enemy3.y = ENEM_ROW2;
-enemy4.x = 0, enemy4.y = ENEM_ROW3; 
+enemy4.x = 0, enemy4.y = ENEM_ROW2, 
+        enemy4.min_speed = 250, enemy4.max_speed = 400;
+enemy5.x = 0, enemy5.y = ENEM_ROW3; 
+enemy6.x = 0, enemy6.y = ENEM_ROW3, 
+        enemy6.min_speed = 250, enemy6.max_speed = 400;
 
 
-var allEnemies = [enemy1,enemy2, enemy3, enemy4];
+var allEnemies = [enemy1,enemy2, enemy3, enemy4, enemy5, enemy6];
 
 var player = new Player();
 
