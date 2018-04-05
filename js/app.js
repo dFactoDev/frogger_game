@@ -11,12 +11,10 @@ var BOUNDARY_TOP = -10, BOUNDARY_BTM = 405,
 // Paving boundaries. Steps in this space count points.
 var PAVING_TOP = 73, PAVING_BTM = 239;
 
-// Player avatar size
-var PLAYER_W = 100, PLAYER_H = 170;
 // Points scored for each step
 var POINTS_STEP = 50;
 
-var score = 0;
+var score = 0, game_won = false;
 var player_last_y = 0, player_last_x = 0; //player position before last update
 
 
@@ -31,6 +29,12 @@ var Enemy = function() {
     
     this.min_speed = 50;
     this.max_speed = 250;
+    
+    this.height = 60;
+    this.width = 80;
+    
+    this.top_margin = 30;
+        
 };
 
 // Update the enemy's position, required method for game
@@ -50,6 +54,9 @@ Enemy.prototype.update = function(dt) {
       this.x = -100; //start off-screen for smoother visual
     }
     
+    this.bottom_y = this.y + this.height; 
+    this.right_x = this.x + this.width;
+    
 };
 
 // Draw the enemy on the screen, required method for game
@@ -60,8 +67,12 @@ Enemy.prototype.render = function() {
 
 var Player = function () {
   this.sprite = 'images/char-boy.png';
-  this.x = COL_W * 2; // TODO: relative pos;
-  this.y = BOUNDARY_BTM; // TODO: relative pos;
+  this.x = COL_W * 2; 
+  this.y = BOUNDARY_BTM; 
+  
+  this.height = 60;
+  this.width = 65;
+  
 };
 
 Player.prototype.update = function() {
@@ -80,7 +91,7 @@ Player.prototype.update = function() {
        break;
   }
   
-  // if player has movedm
+  // if player has moved
   if(player_last_y !== this.y || player_last_x !== this.x) {
     // then if player position is within paved area 
     if(this.y <= PAVING_BTM && this.y >= PAVING_TOP) {
@@ -91,6 +102,9 @@ Player.prototype.update = function() {
     else if (this.y > PAVING_BTM && score > 0) { 
       score -= POINTS_STEP;
       console.log(score);
+    }
+    else if (this.y < PAVING_TOP) {
+      game_won = true;
     }
   }
   
@@ -119,17 +133,6 @@ Player.prototype.handleInput = function(direction) {
       break;
   }
 };
-
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
-
-
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
-
-
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
@@ -162,7 +165,7 @@ enemy6.x = 0, enemy6.y = ENEM_ROW3,
         enemy6.min_speed = 250, enemy6.max_speed = 400;
 
 
-var allEnemies = [enemy1,enemy2, enemy3, enemy4, enemy5, enemy6];
+var allEnemies = [enemy1, enemy3, enemy5];
 
 var player = new Player();
 
