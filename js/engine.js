@@ -22,7 +22,8 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        lastTime;
+        lastTime,
+        canvas_blocks = [];
 
     canvas.width = 505;
     canvas.height = 606;
@@ -45,6 +46,7 @@ var Engine = (function(global) {
          * our update function since it may be used for smooth animation.
          */
         update(dt);
+        checkScore();
         render();
 
         /* Set our lastTime variable which is used to determine the time delta
@@ -80,7 +82,7 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        checkCollisions();
     }
 
     /* This is called by the update function and loops through all of the
@@ -95,6 +97,39 @@ var Engine = (function(global) {
             enemy.update(dt);
         });
         player.update(); 
+    }
+
+    function checkScore() {
+      // if player has moved
+      if(player_last_y !== player.y || player_last_x !== player.x) {
+        // then if player position is within paved area 
+        if(player.y <= PAVING_BTM && player.y >= PAVING_TOP) {
+           score += POINTS_STEP;
+           DEBUG ? console.log(score) : null;
+        } 
+        // if below paving and points already scored
+        else if (player.y > PAVING_BTM && score > 0) { 
+          score -= POINTS_STEP;
+          DEBUG ? console.log(score) : null;
+        }
+        else if (player.y < PAVING_TOP) {
+          DEBUG ? console.log('game won!') : null;
+        }
+      }
+
+      player_last_y = player.y, player_last_x = player.x;
+    }
+
+    function checkCollisions() {
+        allEnemies.forEach(function(enemy) {
+         if (player.y>= (enemy.y - player.height) 
+                  && player.y <= enemy.bottom_y) {
+            if (player.x >= (enemy.x - player.width) && 
+                    player.x <= enemy.right_x) {
+              DEBUG ? console.log('collision') : null; //TODO
+            }
+          }
+        });
     }
 
     /* This function initially draws the "game level", it will then call
@@ -183,4 +218,5 @@ var Engine = (function(global) {
      * from within their app.js files.
      */
     global.ctx = ctx;
+    global.canvas_blocks = canvas_blocks;
 })(this);
