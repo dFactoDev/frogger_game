@@ -1,18 +1,18 @@
-// CONSTANTS
-//  Column and Row sizes
-var ROW_H = 83, COL_W = 101;
+"use strict";
+
+// // CONSTANTS
 //  Rows for each enemy lane
-var ENEM_ROW1 = 1 * ROW_H - 20, 
-        ENEM_ROW2 = 2 * ROW_H - 20,
-        ENEM_ROW3 = 3 * ROW_H - 20;
+var ENEM_ROW1 = 1 * row_size - 20, 
+        ENEM_ROW2 = 2 * row_size - 20,
+        ENEM_ROW3 = 3 * row_size - 20;
 //  Player boundaries
-var BOUNDARY_TOP = -10, BOUNDARY_BTM = 405,
-        BOUNDARY_L = 0, BOUNDARY_R = 404;
+var BOUNDARY_TOP = [0,1,2,3,4], BOUNDARY_BTM = [25,26,27,28,29],
+        BOUNDARY_L = [0,5,10,15,20,25], BOUNDARY_R = [4,9,14,19,24,29];
 // Paving boundaries. Steps in this space count points.
 var PAVING_TOP = 73, PAVING_BTM = 239;
-
 // Points scored for each step
 var POINTS_STEP = 50;
+var DEBUG = true;
 
 var score = 0, game_won = false;
 var player_last_y = 0, player_last_x = 0; //player position before last update
@@ -43,9 +43,8 @@ Enemy.prototype.update = function(dt) {
     // You should multiply any movement by the dt parameter
     // which will ensure the game runs at the same speed for
     // all computers.
-    
  
-    if (this.x < (COL_W * 5)) { //if enemy not off canvas
+    if (this.x < ( row_size * 6)) { //if enemy not off canvas
       this.x += this.speed * dt; // move character further
     } else { // if off canvas
       // reset speed to new random
@@ -67,49 +66,19 @@ Enemy.prototype.render = function() {
 
 var Player = function () {
   this.sprite = 'images/char-boy.png';
-  this.x = COL_W * 2; 
-  this.y = BOUNDARY_BTM; 
   
   this.height = 60;
   this.width = 65;
   
+  this.y_adjust = -10; // adjust y to allign better with grid
+  
 };
 
 Player.prototype.update = function() {
-  switch(true) {
-     case (this.x < BOUNDARY_L): // player is off left edge
-       this.x = BOUNDARY_L;
-       break;
-     case (this.x > BOUNDARY_R): // player is off right edge
-       this.x = BOUNDARY_R;
-       break;
-     case (this.y < BOUNDARY_TOP): // player is off top edge
-       this.y = BOUNDARY_TOP;
-       break;
-     case (this.y > BOUNDARY_BTM): // player is off bottom edge
-       this.y = BOUNDARY_BTM;
-       break;
-  }
-  
-  // if player has moved
-  if(player_last_y !== this.y || player_last_x !== this.x) {
-    // then if player position is within paved area 
-    if(this.y <= PAVING_BTM && this.y >= PAVING_TOP) {
-       score += POINTS_STEP;
-       console.log(score);
-    } 
-    // if below paving and points already scored
-    else if (this.y > PAVING_BTM && score > 0) { 
-      score -= POINTS_STEP;
-      console.log(score);
-    }
-    else if (this.y < PAVING_TOP) {
-      game_won = true;
-    }
-  }
-  
-  player_last_y = this.y, player_last_x = this.x;
-  
+    
+  this.x = canvas_blocks[this.current_block][1];
+  this.y = canvas_blocks[this.current_block][2] + this.y_adjust;
+    
 };
 
 Player.prototype.render = function() {
@@ -120,16 +89,16 @@ Player.prototype.handleInput = function(direction) {
   switch(direction) {
     // TODO: proper values
     case 'left': 
-      this.x -= COL_W;
+      BOUNDARY_L.indexOf(this.current_block) > -1 ? null : this.current_block -= 1;
       break;
     case 'right':
-      this.x += COL_W;
+      BOUNDARY_R.indexOf(this.current_block) > -1 ? null : this.current_block += 1;
       break;
     case 'down':
-      this.y += ROW_H;
+      BOUNDARY_BTM.indexOf(this.current_block) > -1 ? null : this.current_block += 5;
       break;
     case 'up':
-      this.y -= ROW_H;
+      BOUNDARY_TOP.indexOf(this.current_block) > -1 ? null: this.current_block -= 5;
       break;
   }
 };
@@ -156,16 +125,16 @@ var enemy1 = new Enemy(),
 
 enemy1.x = 0, enemy1.y = ENEM_ROW1; 
 enemy2.x = 0, enemy2.y = ENEM_ROW1, 
-        enemy2.min_speed = 250, enemy2.max_speed = 400;
+        enemy2.min_speed = 200, enemy2.max_speed = 300;
 enemy3.x = 0, enemy3.y = ENEM_ROW2;
 enemy4.x = 0, enemy4.y = ENEM_ROW2, 
-        enemy4.min_speed = 250, enemy4.max_speed = 400;
+        enemy4.min_speed = 200, enemy4.max_speed = 300;
 enemy5.x = 0, enemy5.y = ENEM_ROW3; 
 enemy6.x = 0, enemy6.y = ENEM_ROW3, 
-        enemy6.min_speed = 250, enemy6.max_speed = 400;
+        enemy6.min_speed = 200, enemy6.max_speed = 300;
 
 
-var allEnemies = [enemy1, enemy3, enemy5];
+var allEnemies = [enemy1, enemy2, enemy3, enemy5, enemy6];
 
 var player = new Player();
 
