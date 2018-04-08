@@ -17,7 +17,8 @@ var DEBUG = true;
 var score = 0, game_won = false;
 var player_last_y = 0, player_last_x = 0; //player position before last update
 
-
+var activeTreasures = [];
+var allEnemies = [];  
 
 var Enemy = function() {
     // Variables applied to each of our instances go here,
@@ -32,8 +33,6 @@ var Enemy = function() {
     
     this.height = 60;
     this.width = 80;
-    
-    this.top_margin = 30;
         
 };
 
@@ -66,10 +65,7 @@ Enemy.prototype.render = function() {
 
 var Player = function () {
   this.sprite = 'images/char-boy.png';
-  
-  this.height = 60;
-  this.width = 65;
-  
+    
   this.y_adjust = -10; // adjust y to allign better with grid
   
 };
@@ -103,6 +99,28 @@ Player.prototype.handleInput = function(direction) {
   }
 };
 
+var Treasure = function () {
+  this.sprite = "images/Gem Orange.png";
+  this.score_min = 0; // after how many points the treasure should appear
+  this.points = 0; // how many points this treasure adds to total
+  this.active = false; //toggles if in array of active treasures
+  this.y_adjust = -10; // adjust y position to aligh with grid 
+};
+
+Treasure.prototype.update = function() {
+  score >= this.score_min ? this.active = true : this.active = false;
+  
+  this.active ? activeTreasures.push(this) : activeTreasures.pop(this);
+  
+  this.x = canvas_blocks[this.current_block][1];
+  this.y = canvas_blocks[this.current_block][2] + this.y_adjust;
+  
+};
+
+Treasure.prototype.render = function() {
+  ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
 document.addEventListener('keyup', function(e) {
@@ -116,25 +134,54 @@ document.addEventListener('keyup', function(e) {
     player.handleInput(allowedKeys[e.keyCode]);
 });
 
-var enemy1 = new Enemy(),
-        enemy2 = new Enemy(),
-        enemy3 = new Enemy(),
-        enemy4 = new Enemy(),
-        enemy5 = new Enemy(),
-        enemy6 = new Enemy();
+function initEnemies() {
 
-enemy1.x = 0, enemy1.y = ENEM_ROW1; 
-enemy2.x = 0, enemy2.y = ENEM_ROW1, 
-        enemy2.min_speed = 200, enemy2.max_speed = 300;
-enemy3.x = 0, enemy3.y = ENEM_ROW2;
-enemy4.x = 0, enemy4.y = ENEM_ROW2, 
-        enemy4.min_speed = 200, enemy4.max_speed = 300;
-enemy5.x = 0, enemy5.y = ENEM_ROW3; 
-enemy6.x = 0, enemy6.y = ENEM_ROW3, 
-        enemy6.min_speed = 200, enemy6.max_speed = 300;
+  enemy1.x = 0, enemy1.y = ENEM_ROW1; 
+  enemy2.x = 0, enemy2.y = ENEM_ROW1, 
+          enemy2.min_speed = 200, enemy2.max_speed = 300;
+  enemy3.x = 0, enemy3.y = ENEM_ROW2;
+  enemy4.x = 0, enemy4.y = ENEM_ROW2, 
+          enemy4.min_speed = 200, enemy4.max_speed = 300;
+  enemy5.x = 0, enemy5.y = ENEM_ROW3; 
+  enemy6.x = 0, enemy6.y = ENEM_ROW3, 
+          enemy6.min_speed = 200, enemy6.max_speed = 300;
+
+  allEnemies = [enemy1, enemy2, enemy3, enemy5, enemy6];
+  
+}
+
+function initPlayers() {
+  
+  player.height = 60;
+  player.width = 65;
+  player.current_block = 27; 
+  
+}
 
 
-var allEnemies = [enemy1, enemy2, enemy3, enemy5, enemy6];
+function initTreasures() {
+
+  treasure_orange.sprite = "images/Gem Orange.png";
+  treasure_orange.points = 1000;
+  treasure_orange.score_min = 750;
+
+  treasure_blue.sprite = "images/Gem Blue.png";
+  treasure_blue.points = 500;
+  treasure_blue.score_min = 500;
+
+  treasure_green.sprite = "images/Gem Green.png";
+  treasure_green.points = 250;
+  treasure_green.score_min = 250;
+
+}
 
 var player = new Player();
-
+var treasure_orange = new Treasure(),
+      treasure_blue = new Treasure(),
+      treasure_green = new Treasure();
+var enemy1 = new Enemy(),
+      enemy2 = new Enemy(),
+      enemy3 = new Enemy(),
+      enemy4 = new Enemy(),
+      enemy5 = new Enemy(),
+      enemy6 = new Enemy();
