@@ -8,8 +8,11 @@ var ENEM_ROW1 = 1 * row_size - 20,
 //  Player boundaries
 var BOUNDARY_TOP = [0,1,2,3,4], BOUNDARY_BTM = [25,26,27,28,29],
         BOUNDARY_L = [0,5,10,15,20,25], BOUNDARY_R = [4,9,14,19,24,29];
-// Paving boundaries. Steps in this space count points.
-var PAVING_TOP = 73, PAVING_BTM = 239;
+// Blocks of different terrain to determine actions in relation to player position
+var WATER_BLOCKS = [0,1,2,3,4],
+        PAVING_BLOCKS = [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
+        GRASS_BLOCKS = [20,21,22,23,24,25,26,27,28,29];
+
 // Points scored for each step
 var POINTS_STEP = 50;
 var DEBUG = true;
@@ -17,7 +20,7 @@ var DEBUG = true;
 var score = 0, game_won = false;
 var player_last_y = 0, player_last_x = 0; //player position before last update
 
-var activeTreasures = [];
+var allTreasures = [];
 var allEnemies = [];  
 
 var Enemy = function() {
@@ -67,6 +70,7 @@ var Player = function () {
   this.sprite = 'images/char-boy.png';
     
   this.y_adjust = -10; // adjust y to allign better with grid
+  this.moved = false;
   
 };
 
@@ -74,7 +78,6 @@ Player.prototype.update = function() {
     
   this.x = canvas_blocks[this.current_block][1];
   this.y = canvas_blocks[this.current_block][2] + this.y_adjust;
-    
 };
 
 Player.prototype.render = function() {
@@ -85,33 +88,43 @@ Player.prototype.handleInput = function(direction) {
   switch(direction) {
     // TODO: proper values
     case 'left': 
-      BOUNDARY_L.indexOf(this.current_block) > -1 ? null : this.current_block -= 1;
+      if (!BOUNDARY_L.indexOf(this.current_block) > -1) {
+        this.current_block -= 1;
+        this.moved = true;
+      }
       break;
     case 'right':
-      BOUNDARY_R.indexOf(this.current_block) > -1 ? null : this.current_block += 1;
+      if (!BOUNDARY_R.indexOf(this.current_block) > -1) { 
+        this.current_block += 1;
+        this.moved = true;
+      }
       break;
     case 'down':
-      BOUNDARY_BTM.indexOf(this.current_block) > -1 ? null : this.current_block += 5;
+      if (!BOUNDARY_BTM.indexOf(this.current_block) > -1) {
+        this.current_block += 5;
+        this.moved = true;
+      }
       break;
     case 'up':
-      BOUNDARY_TOP.indexOf(this.current_block) > -1 ? null: this.current_block -= 5;
+      if (!BOUNDARY_TOP.indexOf(this.current_block) > -1) { 
+        this.current_block -= 5;
+        this.moved = true;
+      }
       break;
   }
 };
 
 var Treasure = function () {
-  this.sprite = "images/Gem Orange.png";
+  this.sprite = '';
   this.score_min = 0; // after how many points the treasure should appear
   this.points = 0; // how many points this treasure adds to total
   this.active = false; //toggles if in array of active treasures
-  this.y_adjust = -10; // adjust y position to aligh with grid 
+  this.y_adjust = -35; // adjust y position to aligh with grid 
 };
 
 Treasure.prototype.update = function() {
-  score >= this.score_min ? this.active = true : this.active = false;
-  
-  this.active ? activeTreasures.push(this) : activeTreasures.pop(this);
-  
+  score === this.score_min ? this.active = true : null;  
+ 
   this.x = canvas_blocks[this.current_block][1];
   this.y = canvas_blocks[this.current_block][2] + this.y_adjust;
   
@@ -161,17 +174,22 @@ function initPlayers() {
 
 function initTreasures() {
 
-  treasure_orange.sprite = "images/Gem Orange.png";
+  treasure_orange.sprite = "images/Gem-Orange.png";
   treasure_orange.points = 1000;
   treasure_orange.score_min = 750;
+  treasure_orange.current_block = 5; //TODO: random
 
-  treasure_blue.sprite = "images/Gem Blue.png";
+  treasure_blue.sprite = "images/Gem-Blue.png";
   treasure_blue.points = 500;
   treasure_blue.score_min = 500;
+  treasure_blue.current_block = 14; //TODO: random
 
-  treasure_green.sprite = "images/Gem Green.png";
+  treasure_green.sprite = "images/Gem-Green.png";
   treasure_green.points = 250;
   treasure_green.score_min = 250;
+  treasure_green.current_block = 16; //TODO: random
+
+  allTreasures = [treasure_blue, treasure_green, treasure_orange];
 
 }
 
