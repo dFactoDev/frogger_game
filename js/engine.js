@@ -23,6 +23,8 @@ var Engine = (function(global) {
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
         lastTime,
+        row_size = 83,
+        col_size = 101,
         canvas_blocks = [];
 
     canvas.width = 505;
@@ -88,7 +90,7 @@ var Engine = (function(global) {
          */
         for (row = 0; row < numRows; row++) {
             for (col = 0; col < numCols; col++) {
-                canvas_blocks.push([rowImages[row],col * 101,row * 83]);
+                canvas_blocks.push([rowImages[row],col * col_size,row * row_size]);
             }
         }
         
@@ -122,28 +124,31 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
+        allTreasures.forEach(function(treasure) {
+            treasure.update();
+        });
         player.update(); 
     }
 
     function checkScore() {
       // if player has moved
-      if(player_last_y !== player.y || player_last_x !== player.x) {
+      if(player.moved) {
         // then if player position is within paved area 
-        if(player.y <= PAVING_BTM && player.y >= PAVING_TOP) {
+        if(PAVING_BLOCKS.indexOf(player.current_block) > -1) {
            score += POINTS_STEP;
            DEBUG ? console.log(score) : null;
         } 
         // if below paving and points already scored
-        else if (player.y > PAVING_BTM && score > 0) { 
+        else if (GRASS_BLOCKS.indexOf(player.current_block) > -1 && score > 0) { 
           score -= POINTS_STEP;
           DEBUG ? console.log(score) : null;
         }
-        else if (player.y < PAVING_TOP) {
+        else if (WATER_BLOCKS.indexOf(player.current_block) > -1) {
           DEBUG ? console.log('game won!') : null;
         }
       }
 
-      player_last_y = player.y, player_last_x = player.x;
+      player.moved = false;
     }
 
     function checkCollisions() {
@@ -209,7 +214,10 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
+        initEnemies();
+        initPlayers();
+        initTreasures();
+        
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -231,4 +239,7 @@ var Engine = (function(global) {
      */
     global.ctx = ctx;
     global.canvas_blocks = canvas_blocks;
+    global.col_size = col_size;
+    global.row_size = row_size;
+    
 })(this);
