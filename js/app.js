@@ -17,11 +17,18 @@ var WATER_BLOCKS = [0,1,2,3,4],
 var POINTS_STEP = 50;
 var DEBUG = true;
 
-var score = 0, game_won = false;
+var score = 0, highscore = 0, game_won = false;
 var player_last_y = 0, player_last_x = 0; //player position before last update
 
 var allTreasures = [];
 var allEnemies = [];  
+
+var pause_input = false;
+
+// DOM Elements
+var domScore = document.querySelector('.score span'),
+        domHighScore = document.querySelector('.highscore span'),
+        domCongrats = document.querySelector('div.congrats');
 
 var Enemy = function() {
     // Variables applied to each of our instances go here,
@@ -85,28 +92,30 @@ Player.prototype.render = function() {
 };
 
 Player.prototype.handleInput = function(direction) {
+  
+  if(pause_input) { return; };
+  
   switch(direction) {
-    // TODO: proper values
     case 'left': 
-      if (!BOUNDARY_L.indexOf(this.current_block) > -1) {
+      if (BOUNDARY_L.indexOf(this.current_block) < 0) {
         this.current_block -= 1;
         this.moved = true;
       }
       break;
     case 'right':
-      if (!BOUNDARY_R.indexOf(this.current_block) > -1) { 
+      if (BOUNDARY_R.indexOf(this.current_block) < 0) { 
         this.current_block += 1;
         this.moved = true;
       }
       break;
     case 'down':
-      if (!BOUNDARY_BTM.indexOf(this.current_block) > -1) {
+      if (BOUNDARY_BTM.indexOf(this.current_block) < 0) {
         this.current_block += 5;
         this.moved = true;
       }
       break;
     case 'up':
-      if (!BOUNDARY_TOP.indexOf(this.current_block) > -1) { 
+      if (BOUNDARY_TOP.indexOf(this.current_block) < 0) { 
         this.current_block -= 5;
         this.moved = true;
       }
@@ -119,11 +128,12 @@ var Treasure = function () {
   this.score_min = 0; // after how many points the treasure should appear
   this.points = 0; // how many points this treasure adds to total
   this.active = false; //toggles if in array of active treasures
+  this.hit = false; //true when player hits treasure
   this.y_adjust = -35; // adjust y position to aligh with grid 
 };
 
 Treasure.prototype.update = function() {
-  score === this.score_min ? this.active = true : null;  
+  (score >= this.score_min && !this.hit) ? this.active = true : this.active = false;  
  
   this.x = canvas_blocks[this.current_block][1];
   this.y = canvas_blocks[this.current_block][2] + this.y_adjust;
@@ -147,19 +157,30 @@ document.addEventListener('keyup', function(e) {
     player.handleInput(allowedKeys[e.keyCode]);
 });
 
+function randomMinMaxInt(min,max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
 function initEnemies() {
 
   enemy1.x = 0, enemy1.y = ENEM_ROW1; 
   enemy2.x = 0, enemy2.y = ENEM_ROW1, 
-          enemy2.min_speed = 200, enemy2.max_speed = 300;
+          enemy2.min_speed = 200, enemy2.max_speed = 400;
   enemy3.x = 0, enemy3.y = ENEM_ROW2;
   enemy4.x = 0, enemy4.y = ENEM_ROW2, 
-          enemy4.min_speed = 200, enemy4.max_speed = 300;
+          enemy4.min_speed = 150, enemy4.max_speed = 300;
   enemy5.x = 0, enemy5.y = ENEM_ROW3; 
   enemy6.x = 0, enemy6.y = ENEM_ROW3, 
-          enemy6.min_speed = 200, enemy6.max_speed = 300;
+          enemy6.min_speed = 150, enemy6.max_speed = 250;
 
-  allEnemies = [enemy1, enemy2, enemy3, enemy5, enemy6];
+  allEnemies = [enemy1, enemy2, enemy3, enemy5];
+  
+  allEnemies.forEach(function(enemy) {
+    enemy.speed = Math.random() * (enemy.max_speed - enemy.min_speed) 
+          + enemy.min_speed;
+  });
   
 }
 
@@ -175,21 +196,25 @@ function initPlayers() {
 function initTreasures() {
 
   treasure_orange.sprite = "images/Gem-Orange.png";
-  treasure_orange.points = 1000;
-  treasure_orange.score_min = 750;
-  treasure_orange.current_block = 5; //TODO: random
+  treasure_orange.points_factor = 1;
+  treasure_orange.score_min = 2000;
 
   treasure_blue.sprite = "images/Gem-Blue.png";
-  treasure_blue.points = 500;
-  treasure_blue.score_min = 500;
-  treasure_blue.current_block = 14; //TODO: random
+  treasure_blue.points_factor = 0.5;
+  treasure_blue.score_min = 750;
 
   treasure_green.sprite = "images/Gem-Green.png";
-  treasure_green.points = 250;
+  treasure_green.points_factor = 0.25;
   treasure_green.score_min = 250;
-  treasure_green.current_block = 16; //TODO: random
 
   allTreasures = [treasure_blue, treasure_green, treasure_orange];
+
+  allTreasures.forEach(function(treasure) {
+    treasure.current_block = 
+          randomMinMaxInt(PAVING_BLOCKS[0],PAVING_BLOCKS[PAVING_BLOCKS.length-1]);
+    treasure.hit = false;
+    treasure.active = false;
+  });
 
 }
 
