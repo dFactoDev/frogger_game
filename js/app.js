@@ -12,15 +12,15 @@ var WATER_BLOCKS = [0,1,2,3,4],
 
 // Points scored for each step
 var POINTS_STEP = 50;
-var DEBUG = false;
 
-var score = 0, highscore = 0, treasure_step = 0;
+var score = 0, highscore = 0,
+        treasure_step = 0; //counter to control treasure activation
 
 var allTreasures = [];
 var activeTreasures = [];
 var allEnemies = [];  
 
-var pause_input = false;
+var pause_input = false; //stops input when modal displayed
 
 // DOM Elements
 var domScore = document.querySelector('.score span'),
@@ -35,12 +35,13 @@ var Enemy = function() {
     // a helper we've provided to easily load images
     this.sprite = 'images/enemy-bug.png';
     
-    this.min_speed = 10;
+    this.min_speed = 10; 
     this.max_speed = 100;
     
     this.height = 60;
     this.width = 80;
-    this.y_adjust = -20;
+    this.y_adjust = -20; // adjusts y to align image with grid
+    this.frequency = 1; // how frequent appears - less is more
   
 };
 
@@ -51,15 +52,20 @@ Enemy.prototype.update = function(dt) {
     // which will ensure the game runs at the same speed for
     // all computers.
  
-    if (this.x < ( canvas_blocks[BOUNDARY_R[0]][1] + row_size)) { //if enemy not off canvas
+    //if enemy not off canvas
+    if (this.x < ( canvas_blocks[BOUNDARY_R[0]][1] 
+            + this.frequency * row_size)) { 
       this.x += this.speed * dt; // move character further
     } else { // if off canvas
       // reset speed to new random
-      this.speed = Math.random() * (this.max_speed - this.min_speed) + this.min_speed;
+      this.speed = Math.random() 
+              * (this.max_speed - this.min_speed) 
+              + this.min_speed;
       // reset X pos to start from left again
       this.x = -100; //start off-screen for smoother visual
     }
     
+    //to get coordinates for collision detection
     this.bottom_y = this.y + this.height; 
     this.right_x = this.x + this.width;
     
@@ -75,13 +81,14 @@ Enemy.prototype.render = function() {
 var Player = function () {
   this.sprite = 'images/char-boy.png';
     
-  this.y_adjust = -10; // adjust y to allign better with grid
-  this.moved = false;
+  this.y_adjust = -10; // adjust y to allign image with grid
+  this.moved = false; // true if moved from last position
   
 };
 
 Player.prototype.update = function() {
     
+  //get and set x and y associated with currently assigned canvas block  
   this.x = canvas_blocks[this.current_block][1];
   this.y = canvas_blocks[this.current_block][2] + this.y_adjust;
 };
@@ -92,8 +99,11 @@ Player.prototype.render = function() {
 
 Player.prototype.handleInput = function(direction) {
   
+  // block input if true (for game won modal)
   if(pause_input) { return; };
   
+  // for each case, check if current block is one of the blocks on the 
+  // boundary and if false then increment current block otherwise nothing
   switch(direction) {
     case 'left': 
       if (BOUNDARY_L.indexOf(this.current_block) < 0) {
@@ -125,18 +135,19 @@ Player.prototype.handleInput = function(direction) {
 var Treasure = function () {
   this.sprite = '';
   this.interval = 0; // after how many points the treasure should appear
-  this.points = 0; // how many points this treasure adds to total
+  this.points_factor = 0; // how much current score is multiplied with when hit
   this.hit = false; //true when player hits treasure
   this.y_adjust = -35; // adjust y position to aligh with grid 
 };
 
 Treasure.prototype.update = function() {
+  // if step count is in interval of this treasure, make active
   if (treasure_step > 0 &&
           activeTreasures.length === 0 &&
           treasure_step % this.interval === 0 && 
           !this.hit) { activeTreasures.push(this); }  
   
- 
+  // get and set x/y from current block assignment
   this.x = canvas_blocks[this.current_block][1];
   this.y = canvas_blocks[this.current_block][2] + this.y_adjust;
   
@@ -147,6 +158,7 @@ Treasure.prototype.render = function() {
 };
 
 Treasure.prototype.randomizePos = function() {
+  //randomize block of treasure
   this.current_block = 
       randomMinMaxInt(PAVING_BLOCKS[0],PAVING_BLOCKS[PAVING_BLOCKS.length-1]);
 };
@@ -165,6 +177,7 @@ document.addEventListener('keyup', function(e) {
 });
 
 function randomMinMaxInt(min,max) {
+  // return Integer (i.e non-float) of random number
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min)) + min;
@@ -172,21 +185,23 @@ function randomMinMaxInt(min,max) {
 
 function initEnemies() {
 
+  // set enemy position and speed
   enemy1.x = 0, enemy1.y = canvas_blocks[5][2] + enemy1.y_adjust, 
-          enemy1.min_speed = 70, enemy1.max_speed = 100;
+          enemy1.min_speed = 70, enemy1.max_speed = 100, enemy1.frequency = 1;
   enemy2.x = 0, enemy2.y = canvas_blocks[5][2] + enemy2.y_adjust,
-          enemy2.min_speed = 70, enemy2.max_speed = 100;
+          enemy2.min_speed = 70, enemy2.max_speed = 100, enemy2.frequency = 3;
   enemy3.x = 0, enemy3.y = canvas_blocks[10][2] + enemy3.y_adjust,
-          enemy3.min_speed = 70, enemy3.max_speed = 100;
+          enemy3.min_speed = 70, enemy3.max_speed = 100, enemy3.frequency = 1;
   enemy4.x = 0, enemy4.y = canvas_blocks[10][2] + enemy4.y_adjust, 
-          enemy4.min_speed = 100, enemy4.max_speed = 130;
+          enemy4.min_speed = 100, enemy4.max_speed = 130, enemy4.frequency = 12;
   enemy5.x = 0, enemy5.y = canvas_blocks[15][2] + enemy5.y_adjust,
-          enemy5.min_speed = 70, enemy5.max_speed = 100;
+          enemy5.min_speed = 70, enemy5.max_speed = 100, enemy5.frequency = 1;
   enemy6.x = 0, enemy6.y = canvas_blocks[15][2] + enemy6.y_adjust, 
-          enemy6.min_speed = 100, enemy6.max_speed = 130;
+          enemy6.min_speed = 100, enemy6.max_speed = 130, enemy6.frequency = 15;
 
   allEnemies = [enemy1, enemy2, enemy3, enemy5];
   
+  // randomize speed for each enemy
   allEnemies.forEach(function(enemy) {
     enemy.speed = Math.random() * (enemy.max_speed - enemy.min_speed) 
           + enemy.min_speed;
@@ -219,15 +234,19 @@ function initTreasures() {
   treasure_green.interval = 10;
 
   allTreasures = [treasure_blue, treasure_green, treasure_orange];
-    
+  
+  // randomize block for each treasure
   allTreasures.forEach(function(treasure) {
     treasure.randomizePos();
     treasure.hit = false;
   });
   
+  // make all treasures inactive
   activeTreasures.splice(0);
 
 }
+
+//construct objects
 
 var player = new Player();
 var treasure_orange = new Treasure(),
