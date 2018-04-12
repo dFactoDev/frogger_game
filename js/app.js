@@ -1,10 +1,7 @@
 "use strict";
 
 // // CONSTANTS
-//  Rows for each enemy lane
-var ENEM_ROW1 = 1 * row_size - 20, 
-        ENEM_ROW2 = 2 * row_size - 20,
-        ENEM_ROW3 = 3 * row_size - 20;
+
 //  Player boundaries
 var BOUNDARY_TOP = [0,1,2,3,4], BOUNDARY_BTM = [25,26,27,28,29],
         BOUNDARY_L = [0,5,10,15,20,25], BOUNDARY_R = [4,9,14,19,24,29];
@@ -15,12 +12,12 @@ var WATER_BLOCKS = [0,1,2,3,4],
 
 // Points scored for each step
 var POINTS_STEP = 50;
-var DEBUG = true;
+var DEBUG = false;
 
-var score = 0, highscore = 0, game_won = false;
-var player_last_y = 0, player_last_x = 0; //player position before last update
+var score = 0, highscore = 0, treasure_step = 0;
 
 var allTreasures = [];
+var activeTreasures = [];
 var allEnemies = [];  
 
 var pause_input = false;
@@ -38,12 +35,13 @@ var Enemy = function() {
     // a helper we've provided to easily load images
     this.sprite = 'images/enemy-bug.png';
     
-    this.min_speed = 50;
-    this.max_speed = 250;
+    this.min_speed = 10;
+    this.max_speed = 100;
     
     this.height = 60;
     this.width = 80;
-        
+    this.y_adjust = -20;
+  
 };
 
 // Update the enemy's position, required method for game
@@ -53,7 +51,7 @@ Enemy.prototype.update = function(dt) {
     // which will ensure the game runs at the same speed for
     // all computers.
  
-    if (this.x < ( row_size * 6)) { //if enemy not off canvas
+    if (this.x < ( canvas_blocks[BOUNDARY_R[0]][1] + row_size)) { //if enemy not off canvas
       this.x += this.speed * dt; // move character further
     } else { // if off canvas
       // reset speed to new random
@@ -64,6 +62,7 @@ Enemy.prototype.update = function(dt) {
     
     this.bottom_y = this.y + this.height; 
     this.right_x = this.x + this.width;
+    
     
 };
 
@@ -125,15 +124,18 @@ Player.prototype.handleInput = function(direction) {
 
 var Treasure = function () {
   this.sprite = '';
-  this.score_min = 0; // after how many points the treasure should appear
+  this.interval = 0; // after how many points the treasure should appear
   this.points = 0; // how many points this treasure adds to total
-  this.active = false; //toggles if in array of active treasures
   this.hit = false; //true when player hits treasure
   this.y_adjust = -35; // adjust y position to aligh with grid 
 };
 
 Treasure.prototype.update = function() {
-  (score >= this.score_min && !this.hit) ? this.active = true : this.active = false;  
+  if (treasure_step > 0 &&
+          activeTreasures.length === 0 &&
+          treasure_step % this.interval === 0 && 
+          !this.hit) { activeTreasures.push(this); }  
+  
  
   this.x = canvas_blocks[this.current_block][1];
   this.y = canvas_blocks[this.current_block][2] + this.y_adjust;
@@ -142,6 +144,11 @@ Treasure.prototype.update = function() {
 
 Treasure.prototype.render = function() {
   ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
+Treasure.prototype.randomizePos = function() {
+  this.current_block = 
+      randomMinMaxInt(PAVING_BLOCKS[0],PAVING_BLOCKS[PAVING_BLOCKS.length-1]);
 };
 
 // This listens for key presses and sends the keys to your
@@ -165,15 +172,18 @@ function randomMinMaxInt(min,max) {
 
 function initEnemies() {
 
-  enemy1.x = 0, enemy1.y = ENEM_ROW1; 
-  enemy2.x = 0, enemy2.y = ENEM_ROW1, 
-          enemy2.min_speed = 200, enemy2.max_speed = 400;
-  enemy3.x = 0, enemy3.y = ENEM_ROW2;
-  enemy4.x = 0, enemy4.y = ENEM_ROW2, 
-          enemy4.min_speed = 150, enemy4.max_speed = 300;
-  enemy5.x = 0, enemy5.y = ENEM_ROW3; 
-  enemy6.x = 0, enemy6.y = ENEM_ROW3, 
-          enemy6.min_speed = 150, enemy6.max_speed = 250;
+  enemy1.x = 0, enemy1.y = canvas_blocks[5][2] + enemy1.y_adjust, 
+          enemy1.min_speed = 70, enemy1.max_speed = 100;
+  enemy2.x = 0, enemy2.y = canvas_blocks[5][2] + enemy2.y_adjust,
+          enemy2.min_speed = 70, enemy2.max_speed = 100;
+  enemy3.x = 0, enemy3.y = canvas_blocks[10][2] + enemy3.y_adjust,
+          enemy3.min_speed = 70, enemy3.max_speed = 100;
+  enemy4.x = 0, enemy4.y = canvas_blocks[10][2] + enemy4.y_adjust, 
+          enemy4.min_speed = 100, enemy4.max_speed = 130;
+  enemy5.x = 0, enemy5.y = canvas_blocks[15][2] + enemy5.y_adjust,
+          enemy5.min_speed = 70, enemy5.max_speed = 100;
+  enemy6.x = 0, enemy6.y = canvas_blocks[15][2] + enemy6.y_adjust, 
+          enemy6.min_speed = 100, enemy6.max_speed = 130;
 
   allEnemies = [enemy1, enemy2, enemy3, enemy5];
   
@@ -189,6 +199,7 @@ function initPlayers() {
   player.height = 60;
   player.width = 65;
   player.current_block = 27; 
+  treasure_step = 0;
   
 }
 
@@ -197,24 +208,24 @@ function initTreasures() {
 
   treasure_orange.sprite = "images/Gem-Orange.png";
   treasure_orange.points_factor = 1;
-  treasure_orange.score_min = 2000;
+  treasure_orange.interval = 30;
 
   treasure_blue.sprite = "images/Gem-Blue.png";
   treasure_blue.points_factor = 0.5;
-  treasure_blue.score_min = 750;
+  treasure_blue.interval = 20;
 
   treasure_green.sprite = "images/Gem-Green.png";
   treasure_green.points_factor = 0.25;
-  treasure_green.score_min = 250;
+  treasure_green.interval = 10;
 
   allTreasures = [treasure_blue, treasure_green, treasure_orange];
-
+    
   allTreasures.forEach(function(treasure) {
-    treasure.current_block = 
-          randomMinMaxInt(PAVING_BLOCKS[0],PAVING_BLOCKS[PAVING_BLOCKS.length-1]);
+    treasure.randomizePos();
     treasure.hit = false;
-    treasure.active = false;
   });
+  
+  activeTreasures.splice(0);
 
 }
 
