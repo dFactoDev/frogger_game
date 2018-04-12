@@ -19,13 +19,16 @@ var Engine = (function(global) {
      * set the canvas elements height/width and add it to the DOM.
      */
     var doc = global.document,
+        
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
         lastTime,
         row_size = 83,
         col_size = 101,
-        canvas_blocks = [];
+        canvas_blocks = [], // blocks/cells of grid
+        treasures_hit = 0,
+        speed_inc  = 0.20;
 
     canvas.width = 505;
     canvas.height = 606;
@@ -50,6 +53,7 @@ var Engine = (function(global) {
         update(dt);
         checkScore();
         render();
+        updateDom(score, domScore, highscore, domHighScore);
 
         /* Set our lastTime variable which is used to determine the time delta
          * for the next time this function is called.
@@ -67,7 +71,7 @@ var Engine = (function(global) {
      * game loop.
      */
     function init() {
-        reset();
+
         
          /* This array holds the relative URL to the image used
          * for that particular row of the game level.
@@ -93,11 +97,12 @@ var Engine = (function(global) {
                 canvas_blocks.push([rowImages[row],col * col_size,row * row_size]);
             }
         }
-        
+        reset();
         lastTime = Date.now();
         main();
-        console.log('running');
     }
+
+    
 
     /* This function is called by main (our game loop) and itself calls all
      * of the functions which may need to update entity's data. Based on how
@@ -111,6 +116,7 @@ var Engine = (function(global) {
     function update(dt) {
         updateEntities(dt);
         checkCollisions();
+        checkTreasureHit();
     }
 
     /* This is called by the update function and loops through all of the
@@ -133,34 +139,99 @@ var Engine = (function(global) {
     function checkScore() {
       // if player has moved
       if(player.moved) {
-        // then if player position is within paved area 
+        checkEnemies();
+        // then if player position is within paved area, increase score
         if(PAVING_BLOCKS.indexOf(player.current_block) > -1) {
            score += POINTS_STEP;
-           DEBUG ? console.log(score) : null;
+           treasure_step += 1;
         } 
-        // if below paving and points already scored
+        // if on grass and points already scored, decrease score
         else if (GRASS_BLOCKS.indexOf(player.current_block) > -1 && score > 0) { 
           score -= POINTS_STEP;
-          DEBUG ? console.log(score) : null;
+          treasure_step -= 1;
         }
+        // if on water, game won
         else if (WATER_BLOCKS.indexOf(player.current_block) > -1) {
-          DEBUG ? console.log('game won!') : null;
+          gameWon();
         }
       }
 
-      player.moved = false;
+      player.moved = false; // reset moved state
+    }
+
+    function checkEnemies() {
+      if (score > 800000 && allEnemies.indexOf(enemy6) === -1) {
+        allEnemies.push(enemy6); // add another enemy to game
+      }
+      if (score > 200000 && allEnemies.indexOf(enemy4) === -1) {
+        allEnemies.push(enemy4); // add another enemy to game
+      }
     }
 
     function checkCollisions() {
         allEnemies.forEach(function(enemy) {
-         if (player.y>= (enemy.y - player.height) 
+          // if whole of x scale of player overlaps with that of enemy
+          if (player.y>= (enemy.y - player.height) 
                   && player.y <= enemy.bottom_y) {
+            // and if same for y scale
             if (player.x >= (enemy.x - player.width) && 
                     player.x <= enemy.right_x) {
-              DEBUG ? console.log('collision') : null; //TODO
+              // then collision detected, reset elements
+              reset();
             }
           }
         });
+    }
+    
+    function checkTreasureHit() {
+      activeTreasures.forEach(function(treasure) {
+        // if player in same block as treasure (ie. if treasure is hit)
+        if(treasure.current_block === player.current_block) {
+          //multiply score with factor set for the treasure
+          score += Math.floor(score * treasure.points_factor);
+          treasure.hit = true;
+          treasures_hit += 1; // to keep track how many treasures hit
+          //remove treasure from array (ie. make inactive)
+          activeTreasures.splice(activeTreasures.indexOf(this),1);
+        } 
+      });
+      // if all treasures have been hit
+      if (treasures_hit === allTreasures.length) { 
+        //reset treasure positions and state
+        initTreasures();
+        //reset hit count
+        treasures_hit = 0;    
+        allEnemies.forEach(function(enemy) {
+          //increase max_speed of all enemies to increase dufficulty
+          enemy.max_speed += enemy.max_speed * speed_inc;
+        });
+      }
+    }
+
+    function updateDom(score, elScore, highscore, elHighScore) {
+      // update score and highscore display on DOM
+      elScore.innerHTML = score.toString();
+      elHighScore.innerHTML = highscore.toString();
+    }
+    
+    function gameWon() {
+      var congratsMsg;
+      var domMsgElement = domCongrats.querySelector('h2');
+      
+      if(score > highscore) {
+        // if score is higher than last highscore
+        highscore = score;
+        domMsgElement.style.color = 'green';
+        congratsMsg = "NEW High Score: " + score;
+      } else {
+        domMsgElement.style.color = 'blue';
+        congratsMsg = "Score: " + score;
+      }
+      
+      pause_input = true; // pause input while modal is displated
+      domMsgElement.innerHTML = congratsMsg;
+      domCongrats.style.display = 'block'; // display modal
+      setTimeout(reset,1500); // reset after 1.5sec, which hides modal again
     }
 
     /* This function initially draws the "game level", it will then call
@@ -205,7 +276,9 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
-
+        activeTreasures.forEach(function(treasure) {
+            treasure.render();
+        });
         player.render();
     }
 
@@ -214,10 +287,12 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
+        domCongrats.style.display = 'none'; //hide congrats modal
+        pause_input = false; // allow input again
+        score = 0; // reset score
         initEnemies();
         initPlayers();
         initTreasures();
-        
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -229,7 +304,10 @@ var Engine = (function(global) {
         'images/water-block.png',
         'images/grass-block.png',
         'images/enemy-bug.png',
-        'images/char-boy.png'
+        'images/char-boy.png',
+        'images/Gem-Orange.png',
+        'images/Gem-Blue.png',
+        'images/Gem-Green.png'
     ]);
     Resources.onReady(init);
 
