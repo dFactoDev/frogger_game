@@ -24,10 +24,11 @@ Picking up a gem gets you bonus points as follows:
 * __Blue__ Gem - adds _50%_ of your current score.
 * __Orange__ Gem - _doubles_ your current score.
 
-## It gets harder
-As you continue playing, the game gets harder!
+## It gets tougher
+As you continue playing, the game gets more difficult!
 
-Every time you have picked up three gems, the bugs will get faster.
+Every time you have picked up three gems, the bugs will get faster. 
+
 A bug gets added to the game, when the current score goes above 80 000 and again when the score goes above 200 000.
 
 Good luck!
