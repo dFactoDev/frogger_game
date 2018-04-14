@@ -19,7 +19,6 @@ var Engine = (function(global) {
      * set the canvas elements height/width and add it to the DOM.
      */
     var doc = global.document,
-        
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
@@ -27,8 +26,10 @@ var Engine = (function(global) {
         row_size = 83,
         col_size = 101,
         canvas_blocks = [], // blocks/cells of grid
+        add_enemy_score1 = 80000, //add another enemy after this many points
+        add_enemy_score2 = 200000, //add another enemy after this many points
         treasures_hit = 0,
-        speed_inc  = 0.20;
+        speed_inc  = 0.25;
 
     canvas.width = 505;
     canvas.height = 606;
@@ -160,10 +161,10 @@ var Engine = (function(global) {
     }
 
     function checkEnemies() {
-      if (score > 800000 && allEnemies.indexOf(enemy6) === -1) {
+      if (score > add_enemy_score1 && allEnemies.indexOf(enemy6) === -1) {
         allEnemies.push(enemy6); // add another enemy to game
       }
-      if (score > 200000 && allEnemies.indexOf(enemy4) === -1) {
+      if (score > add_enemy_score2 && allEnemies.indexOf(enemy4) === -1) {
         allEnemies.push(enemy4); // add another enemy to game
       }
     }
