@@ -1,3 +1,25 @@
 body {
     text-align: center;
 }
+
+.congrats {
+    text-align: center;
+    width: 95%;
+    position: absolute;
+    background-color: rgba(100,200,200,0.9);
+    border-radius: 30px;
+    border: solid 5px darkgoldenrod;
+    left: 15px;
+    display: none;
+    padding: 20px 20px;
+}
+
+.score, .highscore {
+  display: inline-block;
+  color: blue;
+  padding-right: 15px;
+}
+
+.score span, .highscore span {
+  color: green;
+}
